@@ -26,10 +26,7 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-          <button @click="showAddForm = true" class="add-btn" title="Thêm thương hiệu">
-            <span>➕</span>
-            Thêm thương hiệu
-          </button>
+          <button @click="showAddForm = true" class="add-btn" title="Thêm thương hiệu"></button>
         </div>
       </div>
     </div>
@@ -366,7 +363,13 @@ const deleteBrand = async (id) => {
   if (confirm('Bạn có chắc chắn muốn xóa thương hiệu này?')) {
     try {
       await axios.delete(`http://localhost:8080/api/brands/${id}`)
+
+      // Lưu timestamp để các trang khác biết có update
+      localStorage.setItem('lastBrandUpdate', Date.now().toString())
+      console.log('Brand deleted, timestamp saved to localStorage')
+
       await fetchBrands()
+      // alert('Xóa thương hiệu thành công!')
     } catch (error) {
       console.error('Lỗi khi xóa thương hiệu:', error)
       alert('Lỗi khi xóa thương hiệu!')
@@ -387,11 +390,15 @@ const saveBrand = async () => {
 
     if (editingId.value === null) {
       await axios.post('http://localhost:8080/api/brands', brandData)
-      alert('Thêm thương hiệu thành công!')
+      // alert('Thêm thương hiệu thành công!')
     } else {
       await axios.put(`http://localhost:8080/api/brands/${editingId.value}`, brandData)
-      alert('Cập nhật thương hiệu thành công!')
+      // alert('Cập nhật thương hiệu thành công!')
     }
+
+    // Lưu timestamp để các trang khác biết có update
+    localStorage.setItem('lastBrandUpdate', Date.now().toString())
+    console.log('Brand updated, timestamp saved to localStorage')
 
     resetForm()
     showAddForm.value = false

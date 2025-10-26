@@ -59,9 +59,9 @@
             </select>
             <select v-model="selectedBrand" class="filter-select">
               <option value="">Thương hiệu</option>
-              <option value="chanel">Chanel</option>
-              <option value="dior">Dior</option>
-              <option value="gucci">Gucci</option>
+              <option v-for="brand in brands" :key="brand.id" :value="brand.brandName">
+                {{ brand.brandName }}
+              </option>
             </select>
 
             <!-- Action Buttons -->
@@ -111,37 +111,49 @@
 
               <!-- Giá cả -->
               <div class="form-section-title">Giá cả</div>
-              <label for="price">Giá gốc</label>
-              <input
-                v-model="form.price"
-                type="number"
-                step="0.01"
-                placeholder="Giá gốc *"
-                required
-              />
-              <label for="discountPrice">Giá khuyến mãi</label>
-              <input
-                v-model="form.discountPrice"
-                type="number"
-                step="0.01"
-                placeholder="Giá khuyến mãi"
-              />
+              <div class="form-input-wrapper">
+                <label for="price">Giá gốc</label>
+                <input
+                  v-model="form.price"
+                  type="number"
+                  step="0.01"
+                  placeholder="Giá gốc *"
+                  required
+                />
+              </div>
+              <div class="form-input-wrapper">
+                <label for="discountPrice">Giá khuyến mãi</label>
+                <input
+                  v-model="form.discountPrice"
+                  type="number"
+                  step="0.01"
+                  placeholder="Giá khuyến mãi"
+                />
+              </div>
 
               <!-- Thông tin sản phẩm -->
               <div class="form-section-title">Thông tin sản phẩm</div>
-              <label for="quantity">Số lượng</label>
-              <input v-model="form.quantity" type="number" placeholder="Số lượng *" required />
-              <label for="weight">Trọng lượng</label>
-              <input
-                v-model="form.weight"
-                type="number"
-                step="0.01"
-                placeholder="Trọng lượng (kg)"
-              />
-              <label for="volume">Dung tích</label>
-              <input v-model="form.volume" type="text" placeholder="Dung tích (ml)" />
-              <label for="concentration">Nồng độ</label>
-              <input v-model="form.concentration" type="text" placeholder="Nồng độ" />
+              <div class="form-input-wrapper">
+                <label for="quantity">Số lượng</label>
+                <input v-model="form.quantity" type="number" placeholder="Số lượng *" required />
+              </div>
+              <div class="form-input-wrapper">
+                <label for="weight">Trọng lượng</label>
+                <input
+                  v-model="form.weight"
+                  type="number"
+                  step="0.01"
+                  placeholder="Trọng lượng (kg)"
+                />
+              </div>
+              <div class="form-input-wrapper">
+                <label for="volume">Dung tích</label>
+                <input v-model="form.volume" type="text" placeholder="Dung tích (ml)" />
+              </div>
+              <div class="form-input-wrapper">
+                <label for="concentration">Nồng độ</label>
+                <input v-model="form.concentration" type="text" placeholder="Nồng độ" />
+              </div>
 
               <!-- Phân loại -->
               <div class="form-section-title">Phân loại</div>
@@ -170,16 +182,9 @@
                 <label for="brand">Thương hiệu</label>
                 <select v-model="form.brand" class="form-select">
                   <option value="">Chọn thương hiệu</option>
-                  <option value="Chanel">Chanel</option>
-                  <option value="Dior">Dior</option>
-                  <option value="Gucci">Gucci</option>
-                  <option value="Versace">Versace</option>
-                  <option value="Armani">Armani</option>
-                  <option value="Tom Ford">Tom Ford</option>
-                  <option value="Yves Saint Laurent">Yves Saint Laurent</option>
-                  <option value="Hermès">Hermès</option>
-                  <option value="Prada">Prada</option>
-                  <option value="Bulgari">Bulgari</option>
+                  <option v-for="brand in brands" :key="brand.id" :value="brand.brandName">
+                    {{ brand.brandName }}
+                  </option>
                 </select>
               </div>
 
@@ -290,7 +295,7 @@
               <!-- <td>{{ pr.volume || '-' }}</td> -->
               <!-- <td>{{ pr.concentration || '-' }}</td> -->
               <td>{{ pr.gender || '-' }}</td>
-              <td>{{ pr.brand || '-' }}</td>
+              <td>{{ getBrandName(pr.brand) || '-' }}</td>
               <td>
                 <span :class="pr.quantity > 0 ? 'status-active' : 'status-inactive'">
                   {{ pr.quantity > 0 ? 'Đang bán' : 'Ngừng bán' }}
@@ -301,6 +306,7 @@
                 <span v-else>-</span>
               </td> -->
               <td>{{ pr.viewCount || 0 }}</td>
+
               <!-- <td>{{ formatDate(pr.createdAt) }}</td> -->
               <!-- <td>{{ formatDate(pr.updatedAt) }}</td> -->
 
@@ -410,7 +416,7 @@
                   </div>
                   <div class="detail-item" v-if="selectedProduct.brand">
                     <label>Thương hiệu:</label>
-                    <span>{{ selectedProduct.brand }}</span>
+                    <span>{{ getBrandName(selectedProduct.brand) }}</span>
                   </div>
                 </div>
 
@@ -460,7 +466,7 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, onActivated } from 'vue'
 
 import dauCongIcon from '../img/icon/dauCong.png'
 
@@ -475,6 +481,9 @@ const selectedProduct = ref(null) // sản phẩm được chọn để xem chi 
 const searchQuery = ref('') // từ khóa tìm kiếm
 const selectedCategory = ref('') // danh mục được chọn
 const selectedBrand = ref('') // thương hiệu được chọn
+
+// Danh sách thương hiệu từ database
+const brands = ref([])
 
 // Autocomplete
 const showSuggestions = ref(false) // hiển thị gợi ý
@@ -545,8 +554,20 @@ watch(
   },
 )
 
-// Lấy danh sách sản phẩm
+// Lấy danh sách thương hiệu từ database
+const fetchBrands = async () => {
+  try {
+    console.log('Fetching brands from API...')
+    const response = await axios.get('http://localhost:8080/api/brands')
+    console.log('Brands API Response:', response.data)
+    brands.value = response.data
+  } catch (error) {
+    console.error('Error fetching brands:', error)
+    brands.value = []
+  }
+}
 
+// Lấy danh sách sản phẩm
 const fetchProduct = async () => {
   try {
     console.log('Fetching products from API...')
@@ -614,7 +635,9 @@ const generateSuggestions = () => {
   })
 
   // Tìm gợi ý từ thương hiệu
-  const uniqueBrands = [...new Set(allProducts.value.map((p) => p.brand).filter(Boolean))]
+  const uniqueBrands = [
+    ...new Set(allProducts.value.map((p) => getBrandName(p.brand)).filter(Boolean)),
+  ]
   uniqueBrands.forEach((brand) => {
     if (brand.toLowerCase().includes(query) && brand.toLowerCase() !== query) {
       newSuggestions.push({
@@ -727,15 +750,10 @@ const filterProducts = () => {
 
   // Lọc theo thương hiệu
   if (selectedBrand.value) {
-    const brandMap = {
-      chanel: 'Chanel',
-      dior: 'Dior',
-      gucci: 'Gucci',
-    }
-    const brandFilter = brandMap[selectedBrand.value]
-    if (brandFilter) {
-      filteredProducts = filteredProducts.filter((p) => p.brand === brandFilter)
-    }
+    filteredProducts = filteredProducts.filter((p) => {
+      const brandName = getBrandName(p.brand)
+      return brandName === selectedBrand.value
+    })
   }
 
   // Áp dụng tìm kiếm nếu có
@@ -744,7 +762,8 @@ const filterProducts = () => {
     filteredProducts = filteredProducts.filter((p) => {
       const productName = (p.productName || '').toLowerCase()
       const productCode = (p.productCode || '').toLowerCase()
-      return productName.includes(query) || productCode.includes(query)
+      const brandName = getBrandName(p.brand).toLowerCase()
+      return productName.includes(query) || productCode.includes(query) || brandName.includes(query)
     })
   }
 
@@ -782,7 +801,15 @@ const editProduct = async (id) => {
     form.volume = p.volume || ''
     form.concentration = p.concentration || ''
     form.gender = p.gender || ''
-    form.brand = p.brand || ''
+
+    // Map từ brand object sang brand name
+    if (p.brand) {
+      // Nếu là BrandDTO (có brandName)
+      form.brand = p.brand.brandName || ''
+    } else {
+      form.brand = ''
+    }
+
     form.status = p.quantity > 0 ? 'inStock' : 'outOfStock'
     form.isFeatured = p.isFeatured !== undefined ? p.isFeatured : false
     form.viewCount = p.viewCount || 0
@@ -852,36 +879,72 @@ const removeImage = () => {
 
 // Gửi request thêm sản phẩm
 const addProduct = async () => {
-  // Tạo object để gửi, loại bỏ viewCount vì nó được tính tự động
-  const productData = {
-    productName: form.productName,
-    productCode: form.productCode,
-    price: form.price,
-    discountPrice: form.discountPrice,
-    description: form.description,
-    productImg: form.productImg,
-    quantity: form.quantity,
-    weight: form.weight,
-    volume: form.volume,
-    concentration: form.concentration,
-    gender: form.gender,
-    brand: form.brand,
-    isFeatured: form.isFeatured,
-    createdAt: form.createdAt,
+  try {
+    // Validation cơ bản
+    if (!form.productName.trim()) {
+      alert('Vui lòng nhập tên sản phẩm!')
+      return
+    }
+    if (!form.productCode.trim()) {
+      alert('Vui lòng nhập mã sản phẩm!')
+      return
+    }
+    if (form.price <= 0) {
+      alert('Vui lòng nhập giá sản phẩm hợp lệ!')
+      return
+    }
+    if (form.quantity < 0) {
+      alert('Vui lòng nhập số lượng hợp lệ!')
+      return
+    }
+
+    // Tìm brandId từ brand name
+    const selectedBrandObj = brands.value.find((b) => b.brandName === form.brand)
+    const brandId = selectedBrandObj ? selectedBrandObj.id : null
+
+    // Tạo object để gửi, loại bỏ viewCount vì nó được tính tự động
+    const productData = {
+      productName: form.productName,
+      productCode: form.productCode,
+      price: form.price,
+      discountPrice: form.discountPrice,
+      description: form.description,
+      productImg: form.productImg,
+      quantity: form.quantity,
+      weight: form.weight,
+      volume: form.volume,
+      concentration: form.concentration,
+      gender: form.gender,
+      brandId: brandId,
+      isFeatured: form.isFeatured,
+    }
+
+    console.log('Sending product data:', productData)
+
+    if (editingId.value === null) {
+      console.log('Adding new product...')
+      await axios.post('http://localhost:8080/api/product/add', productData)
+      // alert('Thêm sản phẩm thành công!')
+    } else {
+      console.log('Updating product with ID:', editingId.value)
+      await axios.put(`http://localhost:8080/api/product/update/${editingId.value}`, productData)
+      // alert('Cập nhật sản phẩm thành công!')
+    }
+
+    // Đóng form và reset
+    showAddForm.value = false
+    resetForm()
+
+    // Reload dữ liệu
+    await fetchProduct()
+
+    // Reset tìm kiếm và filter sau khi thêm/sửa sản phẩm
+    resetSearch()
+  } catch (error) {
+    console.error('Error saving product:', error)
+    console.error('Error details:', error.response?.data)
+    alert('Lỗi khi lưu sản phẩm: ' + (error.response?.data?.message || error.message))
   }
-
-  if (editingId.value === null) {
-    await axios.post('http://localhost:8080/api/product/add', productData)
-  } else {
-    await axios.put(`http://localhost:8080/api/product/update/${editingId.value}`, productData)
-  }
-  resetForm()
-
-  showAddForm.value = false
-  await fetchProduct()
-
-  // Reset tìm kiếm và filter sau khi thêm/sửa sản phẩm
-  resetSearch()
 }
 
 // Reset form về trạng thái ban đầu
@@ -958,9 +1021,58 @@ const getImageUrl = (imagePath) => {
   return imagePath
 }
 
+// Lấy tên thương hiệu từ brand object hoặc brandId
+const getBrandName = (brandOrId) => {
+  if (!brandOrId) return ''
+
+  // Nếu là object (từ relationship) - với cấu trúc mới
+  if (typeof brandOrId === 'object') {
+    // Nếu có brandName trực tiếp (DTO structure)
+    if (brandOrId.brandName) {
+      return brandOrId.brandName
+    }
+    // Nếu là BrandsEntity object
+    if (brandOrId.brandName) {
+      return brandOrId.brandName
+    }
+  }
+
+  // Nếu là ID (fallback)
+  if (typeof brandOrId === 'number') {
+    const brand = brands.value.find((b) => b.id === brandOrId)
+    return brand ? brand.brandName : ''
+  }
+
+  return ''
+}
+
 // Gọi API khi component được mount
 onMounted(() => {
+  fetchBrands()
   fetchProduct()
+})
+
+// Reload brands khi component được activate (khi quay lại từ trang khác)
+onActivated(() => {
+  // Kiểm tra nếu có thương hiệu mới được thêm từ trang khác
+  const lastBrandUpdate = localStorage.getItem('lastBrandUpdate')
+  const currentTime = Date.now()
+
+  // Nếu có update trong vòng 30 giây qua, reload brands
+  if (lastBrandUpdate && currentTime - parseInt(lastBrandUpdate) < 30000) {
+    console.log('Detected recent brand update, reloading brands...')
+    fetchBrands()
+  }
+})
+
+// Reload brands khi component được activate (khi quay lại từ trang khác)
+const reloadBrands = () => {
+  fetchBrands()
+}
+
+// Expose function để có thể gọi từ bên ngoài
+defineExpose({
+  reloadBrands,
 })
 </script>
 
